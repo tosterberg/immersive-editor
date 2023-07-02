@@ -1,1 +1,1 @@
-# immersive-edit
+# immersive-editor
