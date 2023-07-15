@@ -15,8 +15,8 @@ from sklearn.model_selection import KFold
 
 gc.enable()
 
-NUM_FOLDS = 3
-NUM_EPOCHS = 2
+NUM_FOLDS = 2
+NUM_EPOCHS = 10
 BATCH_SIZE = 16
 MAX_LEN = 248
 EVAL_SCHEDULE = [(0.50, 16), (0.49, 8), (0.48, 4), (0.47, 2), (-1., 1)]
@@ -53,10 +53,10 @@ class LitDataset(Dataset):
         attention_mask = torch.tensor(self.encoded['attention_mask'][index])
 
         if self.inference_only:
-            return (input_ids, attention_mask)
+            return input_ids, attention_mask
         else:
             target = self.target[index]
-            return (input_ids, attention_mask, target)
+            return input_ids, attention_mask, target
 
 
 class LitModel(nn.Module):
@@ -152,10 +152,11 @@ def predict(model, data_loader):
 
             pred = model(input_ids, attention_mask)
 
-            result[index : index + pred.shape[0]] = pred.flatten().to("cpu")
+            result[index: index + pred.shape[0]] = pred.flatten().to("cpu")
             index += pred.shape[0]
 
     return result
+
 
 def train(model, model_path, train_loader, val_loader,
           optimizer, scheduler=None, num_epochs=NUM_EPOCHS):
@@ -296,7 +297,7 @@ if __name__ == "__main__":
     # We will do this with a single one for testing, but for inference we will want
     # to limit the resources used, and latency of the model, so we will likely only
     # implement one version of the model for our endpoint
-    for index in range(3):
+    for index in range(NUM_FOLDS):
         model_path = f"model_{index + 1}.pth"
         print(f"\nUsing {model_path}")
 
