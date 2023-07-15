@@ -108,6 +108,7 @@ class LitModel(nn.Module):
 
 
 def set_random_seed(random_seed):
+    """ Coordinates random seeds for various packages for deterministic results """
     random.seed(random_seed)
     np.random.seed(random_seed)
     os.environ["PYTHONHASHSEED"] = str(random_seed)
@@ -134,7 +135,6 @@ def eval_mse(model, data_loader):
 
             mse_sum += nn.MSELoss(reduction="sum")(pred.flatten(), target).item()
 
-
     return mse_sum / len(data_loader.dataset)
 
 
@@ -159,32 +159,26 @@ def predict(model, data_loader):
 
 def train(model, model_path, train_loader, val_loader,
           optimizer, scheduler=None, num_epochs=NUM_EPOCHS):
+    """ Train roberta model given config values """
     best_val_rmse = None
     best_epoch = 0
     step = 0
     last_eval_step = 0
     eval_period = EVAL_SCHEDULE[0][1]
-
     start = time.time()
 
     for epoch in range(num_epochs):
         val_rmse = None
-
         for batch_num, (input_ids, attention_mask, target) in enumerate(train_loader):
             input_ids = input_ids.to(DEVICE)
             attention_mask = attention_mask.to(DEVICE)
             target = target.to(DEVICE)
 
             optimizer.zero_grad()
-
             model.train()
-
             pred = model(input_ids, attention_mask)
-
             mse = nn.MSELoss(reduction="mean")(pred.flatten(), target)
-
             mse.backward()
-
             optimizer.step()
             if scheduler:
                 scheduler.step()
@@ -214,42 +208,31 @@ def train(model, model_path, train_loader, val_loader,
                 else:
                     print(f"Still best_val_rmse: {best_val_rmse:0.4}",
                           f"(from epoch {best_epoch})")
-
                 start = time.time()
-
             step += 1
-
-
     return best_val_rmse
 
 
 def create_optimizer(model):
+    """ Create and return optimizer for model """
     named_parameters = list(model.named_parameters())
-
     roberta_parameters = named_parameters[:197]
     attention_parameters = named_parameters[199:203]
     regressor_parameters = named_parameters[203:]
-
     attention_group = [params for (name, params) in attention_parameters]
     regressor_group = [params for (name, params) in regressor_parameters]
-
     parameters = [{"params": attention_group}, {"params": regressor_group}]
 
     for layer_num, (name, params) in enumerate(roberta_parameters):
         weight_decay = 0.0 if "bias" in name else 0.01
-
         lr = 2e-5
-
         if layer_num >= 69:
             lr = 5e-5
-
         if layer_num >= 133:
             lr = 1e-4
-
         parameters.append({"params": params,
                            "weight_decay": weight_decay,
                            "lr": lr})
-
     return AdamW(parameters)
 
 
@@ -260,10 +243,8 @@ if __name__ == "__main__":
     train_df.drop(train_df[(train_df.target == 0) & (train_df.standard_error == 0)].index,
                   inplace=True)
     train_df.reset_index(drop=True, inplace=True)
-
     test_df = pd.read_csv(f"{os.getcwd()}/data/test.csv")
     submission_df = pd.read_csv(f"{os.getcwd()}/data/sample_submission.csv")
-
     tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_PATH)
 
     gc.collect()
@@ -311,6 +292,10 @@ if __name__ == "__main__":
     test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE,
                              drop_last=False, shuffle=False, num_workers=2)
 
+    # All the best implementations used ensembles of various LLM architectures
+    # We will do this with a single one for testing, but for inference we will want
+    # to limit the resources used, and latency of the model, so we will likely only
+    # implement one version of the model for our endpoint
     for index in range(3):
         model_path = f"model_{index + 1}.pth"
         print(f"\nUsing {model_path}")
@@ -326,4 +311,5 @@ if __name__ == "__main__":
 
     predictions = all_predictions.mean(axis=0)
     submission_df.target = predictions
+    # Confirm predictions on output for the kaggle submission style
     print(submission_df)
