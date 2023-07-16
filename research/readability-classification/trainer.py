@@ -1,4 +1,3 @@
-# importing modules
 import os
 import numpy as np
 import pandas as pd
@@ -12,11 +11,10 @@ import gc
 from torch.utils.data import Dataset, DataLoader
 from transformers import AutoTokenizer, AutoModel, AutoConfig, get_cosine_schedule_with_warmup
 from sklearn.model_selection import KFold
-
 gc.enable()
 
-NUM_FOLDS = 2
-NUM_EPOCHS = 10
+NUM_FOLDS = 3
+NUM_EPOCHS = 2
 BATCH_SIZE = 16
 MAX_LEN = 248
 EVAL_SCHEDULE = [(0.50, 16), (0.49, 8), (0.48, 4), (0.47, 2), (-1., 1)]
