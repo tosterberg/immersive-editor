@@ -1,1 +1,1 @@
-# Sample RLHF Implementation
+# RLHF Research
