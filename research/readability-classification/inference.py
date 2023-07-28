@@ -9,22 +9,15 @@ import time
 import math
 import gc
 from torch.utils.data import Dataset, DataLoader
-from transformers import (
-    AutoTokenizer,
-    AutoModel,
-    AutoConfig,
-    get_cosine_schedule_with_warmup,
-)
+from transformers import AutoTokenizer, AutoModel, AutoConfig, get_cosine_schedule_with_warmup
 from sklearn.model_selection import KFold
-
 gc.enable()
 
 NUM_FOLDS = 3
 NUM_EPOCHS = 2
 BATCH_SIZE = 16
 MAX_LEN = 248
-EVAL_SCHEDULE = [(0.50, 16), (0.49, 8), (0.48, 4), (0.47, 2), (-1.0, 1)]
-# Pretrained model https://www.kaggle.com/datasets/maunish/clrp-roberta-base
+EVAL_SCHEDULE = [(0.50, 16), (0.49, 8), (0.48, 4), (0.47, 2), (-1., 1)]
 ROBERTA_PATH = "./models/clrp-roberta-base/clrp_roberta_base"
 TOKENIZER_PATH = "./models/clrp-roberta-base/clrp_roberta_base"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -37,25 +30,24 @@ class LitDataset(Dataset):
         self.df = df
         self.inference_only = inference_only
         self.text = df.excerpt.tolist()
-        # self.text = [text.replace("\n", " ") for text in self.text]
 
         if not self.inference_only:
             self.target = torch.tensor(df.target.values, dtype=torch.float32)
 
         self.encoded = tokenizer.batch_encode_plus(
             self.text,
-            padding="max_length",
+            padding='max_length',
             max_length=MAX_LEN,
             truncation=True,
-            return_attention_mask=True,
+            return_attention_mask=True
         )
 
     def __len__(self):
         return len(self.df)
 
     def __getitem__(self, index):
-        input_ids = torch.tensor(self.encoded["input_ids"][index])
-        attention_mask = torch.tensor(self.encoded["attention_mask"][index])
+        input_ids = torch.tensor(self.encoded['input_ids'][index])
+        attention_mask = torch.tensor(self.encoded['attention_mask'][index])
 
         if self.inference_only:
             return input_ids, attention_mask
@@ -69,26 +61,26 @@ class LitModel(nn.Module):
         super().__init__()
 
         config = AutoConfig.from_pretrained(ROBERTA_PATH)
-        config.update(
-            {
-                "output_hidden_states": True,
-                "hidden_dropout_prob": 0.0,
-                "layer_norm_eps": 1e-7,
-            }
-        )
+        config.update({"output_hidden_states": True,
+                       "hidden_dropout_prob": 0.0,
+                       "layer_norm_eps": 1e-7})
 
         self.roberta = AutoModel.from_pretrained(ROBERTA_PATH, config=config)
 
         self.attention = nn.Sequential(
-            nn.Linear(768, 512), nn.Tanh(), nn.Linear(512, 1), nn.Softmax(dim=1)
+            nn.Linear(768, 512),
+            nn.Tanh(),
+            nn.Linear(512, 1),
+            nn.Softmax(dim=1)
         )
 
-        self.regressor = nn.Sequential(nn.Linear(768, 1))
+        self.regressor = nn.Sequential(
+            nn.Linear(768, 1)
+        )
 
     def forward(self, input_ids, attention_mask):
-        roberta_output = self.roberta(
-            input_ids=input_ids, attention_mask=attention_mask
-        )
+        roberta_output = self.roberta(input_ids=input_ids,
+                                      attention_mask=attention_mask)
 
         # There are a total of 13 layers of hidden states.
         # 1 for the embedding layer, and 12 for the 12 Roberta layers.
@@ -157,21 +149,14 @@ def predict(model, data_loader):
 
             pred = model(input_ids, attention_mask)
 
-            result[index : index + pred.shape[0]] = pred.flatten().to("cpu")
+            result[index: index + pred.shape[0]] = pred.flatten().to("cpu")
             index += pred.shape[0]
 
     return result
 
 
-def train(
-    model,
-    model_path,
-    train_loader,
-    val_loader,
-    optimizer,
-    scheduler=None,
-    num_epochs=NUM_EPOCHS,
-):
+def train(model, model_path, train_loader, val_loader,
+          optimizer, scheduler=None, num_epochs=NUM_EPOCHS):
     """ Train roberta model given config values """
     best_val_rmse = None
     best_epoch = 0
@@ -205,10 +190,8 @@ def train(
 
                 val_rmse = math.sqrt(eval_mse(model, val_loader))
 
-                print(
-                    f"Epoch: {epoch} batch_num: {batch_num}",
-                    f"val_rmse: {val_rmse:0.4}",
-                )
+                print(f"Epoch: {epoch} batch_num: {batch_num}",
+                      f"val_rmse: {val_rmse:0.4}")
 
                 for rmse, period in EVAL_SCHEDULE:
                     if val_rmse >= rmse:
@@ -221,10 +204,8 @@ def train(
                     torch.save(model.state_dict(), model_path)
                     print(f"New best_val_rmse: {best_val_rmse:0.4}")
                 else:
-                    print(
-                        f"Still best_val_rmse: {best_val_rmse:0.4}",
-                        f"(from epoch {best_epoch})",
-                    )
+                    print(f"Still best_val_rmse: {best_val_rmse:0.4}",
+                          f"(from epoch {best_epoch})")
                 start = time.time()
             step += 1
     return best_val_rmse
@@ -247,7 +228,9 @@ def create_optimizer(model):
             lr = 5e-5
         if layer_num >= 133:
             lr = 1e-4
-        parameters.append({"params": params, "weight_decay": weight_decay, "lr": lr})
+        parameters.append({"params": params,
+                           "weight_decay": weight_decay,
+                           "lr": lr})
     return AdamW(parameters)
 
 
@@ -255,10 +238,8 @@ if __name__ == "__main__":
     train_df = pd.read_csv(f"{os.getcwd()}/data/train.csv")
 
     # Remove incomplete entries if any.
-    train_df.drop(
-        train_df[(train_df.target == 0) & (train_df.standard_error == 0)].index,
-        inplace=True,
-    )
+    train_df.drop(train_df[(train_df.target == 0) & (train_df.standard_error == 0)].index,
+                  inplace=True)
     train_df.reset_index(drop=True, inplace=True)
     test_df = pd.read_csv(f"{os.getcwd()}/data/test.csv")
     submission_df = pd.read_csv(f"{os.getcwd()}/data/sample_submission.csv")
@@ -278,20 +259,10 @@ if __name__ == "__main__":
         train_dataset = LitDataset(train_df.loc[train_indices])
         val_dataset = LitDataset(train_df.loc[val_indices])
 
-        train_loader = DataLoader(
-            train_dataset,
-            batch_size=BATCH_SIZE,
-            drop_last=True,
-            shuffle=True,
-            num_workers=1,
-        )
-        val_loader = DataLoader(
-            val_dataset,
-            batch_size=BATCH_SIZE,
-            drop_last=False,
-            shuffle=False,
-            num_workers=1,
-        )
+        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE,
+                                  drop_last=True, shuffle=True, num_workers=1)
+        val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE,
+                                drop_last=False, shuffle=False, num_workers=1)
 
         set_random_seed(SEED + fold)
 
@@ -301,18 +272,9 @@ if __name__ == "__main__":
         scheduler = get_cosine_schedule_with_warmup(
             optimizer,
             num_training_steps=NUM_EPOCHS * len(train_loader),
-            num_warmup_steps=50,
-        )
-        list_val_rmse.append(
-            train(
-                model,
-                model_path,
-                train_loader,
-                val_loader,
-                optimizer,
-                scheduler=scheduler,
-            )
-        )
+            num_warmup_steps=50)
+        list_val_rmse.append(train(model, model_path, train_loader,
+                                   val_loader, optimizer, scheduler=scheduler))
         del model
         gc.collect()
 
@@ -325,20 +287,15 @@ if __name__ == "__main__":
     all_predictions = np.zeros((3, len(test_df)))
 
     test_dataset = LitDataset(test_df, inference_only=True)
-    test_loader = DataLoader(
-        test_dataset,
-        batch_size=BATCH_SIZE,
-        drop_last=False,
-        shuffle=False,
-        num_workers=2,
-    )
+    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE,
+                             drop_last=False, shuffle=False, num_workers=2)
 
     # All the best implementations used ensembles of various LLM architectures
     # We will do this with a single one for testing, but for inference we will want
     # to limit the resources used, and latency of the model, so we will likely only
     # implement one version of the model for our endpoint
     for index in range(NUM_FOLDS):
-        model_path = f"model_{index + 1}.pth"
+        model_path = f"models/deberta-large/model_{index + 1}.pth"
         print(f"\nUsing {model_path}")
 
         model = LitModel()
