@@ -67,6 +67,10 @@ if __name__ == "__main__":
     responses = []
     chosens = []
     rejecteds = []
+    eval_prompts = []
+    eval_responses = []
+    eval_chosens = []
+    eval_rejecteds = []
     with open("data/sentence_sft_dataset.json", "r") as f:
         sentence_dataset_accept = json.load(f)
     with open("data/sentence_sft_second_dataset.json", "r") as f:
@@ -80,18 +84,28 @@ if __name__ == "__main__":
     if len(accept_data) != len(reject_data):
         raise AssertionError("Accept Dataset must equal Reject Dataset")
 
+    count = 0
     for idx in range(len(accept_data)):
         a_obs = accept_data[idx]
         r_obs = reject_data[idx]
         if a_obs["accepted"] == "True" or r_obs["accepted"] == "True":
             prompt, response, accept, reject = decompose_responses(a_obs, r_obs)
-            prompts.append(prompt)
-            responses.append(response)
-            chosens.append(accept)
-            rejecteds.append(reject)
-
-    response_dataset = {"prompt": prompts, "chosen": chosens, "rejected": rejecteds}
-    with open("data/sentence_rw_dict_dataset.json", "w") as f:
-        json.dump(response_dataset, f)
+            count += 1
+            if count % 5 == 0:
+                eval_prompts.append(prompt)
+                eval_responses.append(response)
+                eval_chosens.append(accept)
+                eval_rejecteds.append(reject)
+            else:
+                prompts.append(prompt)
+                responses.append(response)
+                chosens.append(accept)
+                rejecteds.append(reject)
+    train = {"prompt": prompts, "chosen": chosens, "rejected": rejecteds}
+    test = {"prompt": eval_prompts, "chosen": eval_chosens, "rejected": eval_rejecteds}
+    with open("dataset/train.json", "w") as f:
+        json.dump(train, f)
+    with open("dataset/eval.json", "w") as f:
+        json.dump(test, f)
 """
 """

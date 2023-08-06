@@ -16,8 +16,6 @@ class PromptRawDataset(object):
         self.local_rank = local_rank
         if not dataset_name == "local/jsonfile":
             self.raw_datasets = load_dataset(dataset_name)
-        else:
-            self.raw_datasets = load_dataset("./sentence_dict_dataset.json")
 
     def get_train_data(self):
         return
