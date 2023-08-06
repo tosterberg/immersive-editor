@@ -9,7 +9,7 @@ OUTPUT_PATH=./output
 mkdir -p $OUTPUT_PATH
 
 deepspeed --num_gpus 1 main.py \
-   --data_path  ./sentence_dict_dataset.json \
+   --data_path  local/jsonfile \
    --data_split 2,4,4 \
    --model_name_or_path tiiuae/falcon-7b \
    --per_device_train_batch_size 2 \
