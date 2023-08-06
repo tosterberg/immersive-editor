@@ -41,6 +41,7 @@ def create_hf_model(
         model = model_class.from_pretrained(
             model_name_or_path,
             from_tf=bool(".ckpt" in model_name_or_path),
+            trust_remote_code=True,
             config=model_config,
         )
 
