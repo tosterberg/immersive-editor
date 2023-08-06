@@ -55,10 +55,10 @@ def parse_args():
     )
     parser.add_argument(
         "--actor-model",
-        type=lambda x: x.replace("facebook/opt-", ""),
-        default="1.3b",
-        choices=("1.3b", "6.7b", "13b", "66b"),
-        help="Which facebook/opt-* model to use for Actor (step 1)",
+        type=lambda x: x.replace("tiiuae/falcon-", ""),
+        default="7b",
+        choices="7b",
+        help="Which tiiuae/falcon-* model to use for Actor (step 1)",
     )
     parser.add_argument(
         "--reward-model",
@@ -116,9 +116,9 @@ def get_zero_stage(args, step_num):
 
 def get_output_dir(args, step_num):
     model_size = get_model_size(args, step_num)
-    output_dir = os.path.join(args.output_dir,
-                              f"{model_type[step_num]}-models",
-                              f"{model_size}")
+    output_dir = os.path.join(
+        args.output_dir, f"{model_type[step_num]}-models", f"{model_size}"
+    )
     return output_dir
 
 
@@ -172,17 +172,21 @@ def launch_cmd(args, step_num, cmd):
     p = subprocess.Popen(cmd, cwd=working_dir, shell=True)
     p.wait()
     if p.returncode != 0:
-        raise RuntimeError('\n\n'.join((
-            f"Step {step_num} exited with non-zero status {p.returncode}",
-            f"Launch command: {cmd}",
-            f"Log output: {os.path.join(get_output_dir(args, step_num), 'training.log')}",
-            f"Please see our tutorial at {dse_url}{step_dirs[step_num]}",
-            "Please check that you have installed our requirements: `pip install -r requirements.txt`",
-            f"If you are seeing an OOM error, try modifying {get_script(args, step_num)}:",
-            "  - Reduce `--per_device_*_batch_size`",
-            "  - Increase `--zero_stage {0,1,2,3}` on multi-gpu setups",
-            "  - Enable `--gradient_checkpointing` or `--only_optimize_lora`"
-        )))
+        raise RuntimeError(
+            "\n\n".join(
+                (
+                    f"Step {step_num} exited with non-zero status {p.returncode}",
+                    f"Launch command: {cmd}",
+                    f"Log output: {os.path.join(get_output_dir(args, step_num), 'training.log')}",
+                    f"Please see our tutorial at {dse_url}{step_dirs[step_num]}",
+                    "Please check that you have installed our requirements: `pip install -r requirements.txt`",
+                    f"If you are seeing an OOM error, try modifying {get_script(args, step_num)}:",
+                    "  - Reduce `--per_device_*_batch_size`",
+                    "  - Increase `--zero_stage {0,1,2,3}` on multi-gpu setups",
+                    "  - Enable `--gradient_checkpointing` or `--only_optimize_lora`",
+                )
+            )
+        )
 
 
 def main(args):
