@@ -63,14 +63,8 @@ def decompose_responses(res1, res2):
 if __name__ == "__main__":
     torch.device(DEVICE)
 
-    prompts = []
-    responses = []
-    chosens = []
-    rejecteds = []
-    eval_prompts = []
-    eval_responses = []
-    eval_chosens = []
-    eval_rejecteds = []
+    train_list = []
+    eval_list = []
     with open("data/sentence_sft_dataset.json", "r") as f:
         sentence_dataset_accept = json.load(f)
     with open("data/sentence_sft_second_dataset.json", "r") as f:
@@ -92,20 +86,16 @@ if __name__ == "__main__":
             prompt, response, accept, reject = decompose_responses(a_obs, r_obs)
             count += 1
             if count % 5 == 0:
-                eval_prompts.append(prompt)
-                eval_responses.append(response)
-                eval_chosens.append(accept)
-                eval_rejecteds.append(reject)
+                eval_list.append({"prompt": prompt, "chosen": accept, "reject": reject})
             else:
-                prompts.append(prompt)
-                responses.append(response)
-                chosens.append(accept)
-                rejecteds.append(reject)
-    train = {"prompt": prompts, "chosen": chosens, "rejected": rejecteds}
-    test = {"prompt": eval_prompts, "chosen": eval_chosens, "rejected": eval_rejecteds}
-    with open("training/utils/data/train.json", "w") as f:
-        json.dump(train, f)
-    with open("training/utils/data/eval.json", "w") as f:
-        json.dump(test, f)
+                train_list.append(
+                    {"prompt": prompt, "chosen": accept, "reject": reject}
+                )
+    # train = {"prompt": prompts, "chosen": chosens, "rejected": rejecteds}
+    # test = {"prompt": eval_prompts, "chosen": eval_chosens, "rejected": eval_rejecteds}
+    with open("data/train.json", "w") as f:
+        json.dump(train_list, f)
+    with open("data/eval.json", "w") as f:
+        json.dump(eval_list, f)
 """
 """
