@@ -103,9 +103,9 @@ if __name__ == "__main__":
                 rejecteds.append(reject)
     train = {"prompt": prompts, "chosen": chosens, "rejected": rejecteds}
     test = {"prompt": eval_prompts, "chosen": eval_chosens, "rejected": eval_rejecteds}
-    with open("dataset/train.json", "w") as f:
+    with open("training/utils/data/train.json", "w") as f:
         json.dump(train, f)
-    with open("dataset/eval.json", "w") as f:
+    with open("training/utils/data/eval.json", "w") as f:
         json.dump(test, f)
 """
 """
