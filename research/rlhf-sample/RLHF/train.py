@@ -55,10 +55,11 @@ def parse_args():
     )
     parser.add_argument(
         "--actor-model",
-        type=lambda x: x.replace("tiiuae/falcon-", ""),
-        default="7b",
-        choices="7b",
-        help="Which tiiuae/falcon-* model to use for Actor (step 1)",
+        type=lambda x: x.replace("facebook/opt-", ""),
+        # type=lambda x: x.replace("tiiuae/falcon-", ""),
+        default="1.3b",
+        choices=("1.3b", "6.7b", "13b", "66b"),
+        help="Which facebook/opt-* model to use for Actor (step 1)",
     )
     parser.add_argument(
         "--reward-model",
