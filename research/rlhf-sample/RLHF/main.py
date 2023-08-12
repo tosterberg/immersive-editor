@@ -29,24 +29,15 @@ class SentenceDataset(Dataset):
         self.prepend = (
             "Rewrite the following passage to be more readable to lower grade level readers."
             "###\n"
+            'Passage: "When the young people returned to the ballroom, it presented a decidedly '
+            'changed appearance." Rewrite: "When the young people returned to the ballroom, it had '
+            'a different appearance."'
+            "###\n"
             'Passage: "This Pedrarias was seventy-two years old."'
-            'Rewrite: "This jewel or stone was seventy-two years old."'
+            'Rewrite: "This jewel was seventy-two years old."'
             "###\n"
             "Passage: "
         )
-
-        # self.prepend = (
-        #    "Rewrite the following passage to be more readable to lower grade level readers."
-        #    "###\n"
-        #    'Passage: "When the young people returned to the ballroom, it presented a decidedly '
-        #    'changed appearance." Rewrite: "When the young people returned to the ballroom, it had '
-        #    'a different appearance."'
-        #    "###\n"
-        #    'Passage: "This Pedrarias was seventy-two years old."'
-        #    'Rewrite: "This jewel was seventy-two years old."'
-        #    "###\n"
-        #    "Passage: "
-        # )
 
         self.prepended_prompts = [
             f'{self.prepend}"{prompt}." Rewrite: "' for prompt in self.prompts
