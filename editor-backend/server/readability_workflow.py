@@ -98,7 +98,7 @@ class ReadabilityWorkflow(object):
         ReadabilityWorkflow
 
         Object for orchestrating the whole readability rewrite workflow, as well as,
-        loading and logging for useful persisted data created while running.
+        loading and logging for useful persisted data created while running the predict method.
     """
 
     def __init__(
@@ -145,17 +145,19 @@ class ReadabilityWorkflow(object):
         self.prompts = json.load(prompts_file)
         prompts_file.close()
 
-    def add_rated_response(self):
-        pass
+    def add_rated_response(self, annotations):
+        for annotation in annotations:
+            self.rated_responses.append(annotation)
 
     def get_prompt_id(self, prompt):
         if prompt not in self.prompts.keys():
             self.prompts[prompt] = str(uuid.uuid4())
         return self.prompts[prompt]
 
-    @staticmethod
-    def build_response(responses, count):
+    def build_response(self, responses, count):
         responses.sort(key=lambda x: x["quality_score"], reverse=True)
+        for response in responses:
+            self.responses.append(response)
         return dict({"inferences": responses[:count]})
 
     def generate_rewrite(self, predictor, config, responses, retries=10):
@@ -179,7 +181,6 @@ class ReadabilityWorkflow(object):
             config["readability_change"] = delta_readability
             config["quality_score"] = delta_readability * delta_similarity
             config["rewrite_id"] = str(uuid.uuid4())
-            self.responses.append(copy.deepcopy(config))
             if delta_readability > 0.0:
                 response_list.append(copy.deepcopy(config))
             if len(response_list) >= responses:
@@ -474,23 +475,3 @@ class SimilarityModelWrapper(object):
                 sentence_embeddings_input, sentence_embeddings_output
             ).to("cpu")
             return similarity.numpy()[0]
-
-
-if __name__ == "__main__":
-    gc.collect()
-    test_prompt = (
-        "King Edward, be it remembered, was a man of many and varied interests"
-    )
-
-    workflow = ReadabilityWorkflow()
-    res = workflow.predict(test_prompt)
-    for idx, r in enumerate(res["inferences"]):
-        print(f"Rank: {idx+1}, Model: {r['model_name']}")
-        print(
-            f"Quality: {r['quality_score']:.2f}, r1: {r['original_readability']:.2f}, "
-            f"r2: {r['rewrite_readability']:.2f}, r_diff: {r['readability_change']:.2f}, "
-            f"similarity: {r['similarity']:.2f}"
-        )
-        print(r["rewrite"])
-        print("\n")
-    workflow.save_annotations()
