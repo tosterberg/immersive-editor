@@ -18,17 +18,17 @@ from transformers import (
 
 gc.enable()
 cwd = os.getcwd()
-FEEDBACK_RESPONSES = "server/feedback/responses.json"
-FEEDBACK_REWRITES = "server/feedback/rewrites.json"
-FEEDBACK_PROMPTS = "server/feedback/prompts.json"
+FEEDBACK_RESPONSES = "feedback/responses.json"
+FEEDBACK_REWRITES = "feedback/rewrites.json"
+FEEDBACK_PROMPTS = "feedback/prompts.json"
 SEMANTIC_EMBEDDING = "sentence-transformers/all-mpnet-base-v2"
-ROBERTA_PATH = os.path.join(cwd, "server/models/clrp-roberta-base/clrp_roberta_base")
+ROBERTA_PATH = os.path.join(cwd, "models/clrp-roberta-base/clrp_roberta_base")
 READABILITY_MODELS = [
-    "server/models/model_1.pth",
-    "server/models/model_2.pth",
-    "server/models/model_3.pth",
+    "models/model_1.pth",
+    "models/model_2.pth",
+    "models/model_3.pth",
 ]
-RLHF_MODEL_PATH = "server/models/actor"
+RLHF_MODEL_PATH = "models/actor"
 RLHF_MODEL_NAME = "facebook/opt-1.3b"
 LLM_MODEL = "tiiuae/falcon-7b"
 BATCH_SIZE = 1
@@ -103,6 +103,7 @@ class ReadabilityWorkflow(object):
 
     def __init__(
         self,
+        llm=False,
         annotations_path=FEEDBACK_RESPONSES,
         rewrites_path=FEEDBACK_REWRITES,
         prompts_path=FEEDBACK_PROMPTS,
@@ -110,7 +111,10 @@ class ReadabilityWorkflow(object):
         self.similarity_model = SimilarityModelWrapper()
         self.readability_model = ReadabilityModelWrapper()
         self.rlhf_model = RLHFModelWrapper()
-        self.large_model = LargeModelWrapper()
+        if llm:
+            self.large_model = LargeModelWrapper()
+        else:
+            self.large_model = None
         self.annotations_path = annotations_path
         self.rewrites_path = rewrites_path
         self.prompts_path = prompts_path
@@ -177,11 +181,11 @@ class ReadabilityWorkflow(object):
             delta_readability = (
                 config["rewrite_readability"] - config["original_readability"]
             )
-            delta_similarity = config["similarity"]
+            delta_similarity = (1 - abs(0.92 - config["similarity"])) ** 2
             config["readability_change"] = delta_readability
-            config["quality_score"] = delta_readability * delta_similarity
+            config["quality_score"] = (delta_readability + 1) * delta_similarity - 1
             config["rewrite_id"] = str(uuid.uuid4())
-            if delta_readability > 0.0:
+            if delta_readability > 0.0 and config["similarity"] > 0.8:
                 response_list.append(copy.deepcopy(config))
             if len(response_list) >= responses:
                 break
@@ -199,10 +203,12 @@ class ReadabilityWorkflow(object):
         rlhf = copy.deepcopy(config)
         rlhf = self.generate_rewrite(self.rlhf_model, rlhf, responses)
         gc.collect()
-        llm = copy.deepcopy(config)
-        llm = self.generate_rewrite(self.large_model, llm, responses)
-        gc.collect()
-        return self.build_response((rlhf + llm), responses)
+        if self.large_model:
+            llm = copy.deepcopy(config)
+            llm = self.generate_rewrite(self.large_model, llm, responses)
+            gc.collect()
+            return self.build_response((rlhf + llm), responses)
+        return self.build_response(rlhf, responses)
 
 
 class LargeModelWrapper(object):

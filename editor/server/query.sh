@@ -3,7 +3,7 @@
 curl http://localhost:5000/
 
 curl -X POST -H "Content-Type: application/json" -d '{
-  "prompt": "King Edward, be it remembered, was a man of many and varied interests"
+  "prompt": "King Edward, be it remembered, was a man of many and varied interest"
 }' http://localhost:5000/predict
 
 curl http://localhost:5000/save

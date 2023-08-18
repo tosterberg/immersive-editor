@@ -18,6 +18,8 @@ SEED = 1234
 BATCH_SIZE = 1
 MAX_LEN = 248
 LLM_PATH = "tiiuae/falcon-7b"
+RLHF_MODEL_PATH = "output/actor"
+RLHF_MODEL_NAME = "facebook/opt-1.3b"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
@@ -105,18 +107,9 @@ if __name__ == "__main__":
     with open("data/archive/sentence_dataset.json", "r") as f:
         sentence_list = json.load(f)
 
-    tokenizer = AutoTokenizer.from_pretrained(LLM_PATH)
-    model = AutoModelForCausalLM.from_pretrained(
-        LLM_PATH, trust_remote_code=True, torch_dtype=torch.bfloat16
-    ).to(DEVICE)
+    tokenizer = AutoTokenizer.from_pretrained(RLHF_MODEL_NAME)
+    model = AutoModelForCausalLM.from_pretrained(RLHF_MODEL_PATH).to(DEVICE)
     dataset = SentenceDataset(sentence_list["dataset"])
-    stop_words_ids = [
-        tokenizer(stop_word, return_tensors="pt")["input_ids"].squeeze()
-        for stop_word in ["###"]
-    ]
-    stopping_criteria = StoppingCriteriaList(
-        [StoppingCriteriaSub(stops=stop_words_ids, encounters=4)]
-    )
     prompts, texts = dataset.all_prompts()
 
     for idx, prompt in enumerate(prompts):
@@ -134,25 +127,28 @@ if __name__ == "__main__":
                 attention_mask=attention_mask,
                 max_new_tokens=in_len,
                 early_stopping=True,
-                stopping_criteria=stopping_criteria,
                 do_sample=True,
-                pad_token_id=11,
             )
             answer = tokenizer.batch_decode(out, skip_special_tokens=True)
+            rewrite = answer[0][answer[0].find(prompt) + len(prompt) :]
+            rewrite = rewrite.split('."')[0]
+            rewrite = rewrite.split("<|")[0]
+            rewrite = rewrite.split("#")[0]
+            rewrite = " ".join(rewrite.split())
             response_list.append(
                 {
                     idx: {
                         "prompt": prompt,
                         "inference": answer[0],
                         "input": texts[idx],
-                        "response": answer[0][answer[0].find(prompt) + len(prompt) :],
+                        "response": rewrite,
                     }
                 }
             )
     print("Done")
     response_dataset = {"dataset": response_list}
     # with open("data/sentence_inferences.json", "w") as f:
-    with open("data/sentence_second_inferences.json", "w") as f:
+    with open("data/sentence_rlhf_inferences.json", "w") as f:
         json.dump(response_dataset, f)
 """
 """

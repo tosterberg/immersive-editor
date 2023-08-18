@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1 style="margin: auto; padding: 14px; width: 800px;">AutoRewrite: Readability</h1>
+    <form action="" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div style="margin: auto; padding: 14px; width: 800px;">
+            <span>Original Sentence:</span><br>
+            {{ form.sentence(style="width: 800px; height 120px; margin-bottom: 14px") }}<br>
+            {{ form.submit() }}
+        </div>
+    </form>
+    {% if res %}
+    {% for inference in res: %}
+    <div style="box-shadow: 2px 3px 4px rgba(0,0,0,.5); padding: 14px; width: 800px; margin: 14px auto">
+        <div>{{ inference.rewrite }}</div>
+        <ul>
+            <li><i>Model:</i> {{ inference.model_name }}</li>
+            <li><i>Readability Improvement:</i> {{ "%.2f" % inference.readability_change }}</li>
+            <li><i>Similarity to Input:</i> {{ "%.2f" % inference.similarity }}</li>
+            <li><i>Quality Score:</i> {{ "%.2f" % inference.quality_score }}</li>
+        </ul>
+    </div>
+    {% endfor %}
+    {% endif %}
+{% endblock %}
