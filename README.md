@@ -14,9 +14,13 @@ The strategy that we will employ for calculating the readability of an input tex
 
 ![image](./assets/readability_workflow.png)
 
+[Readability Base Model - clrp-roberta-base](https://www.kaggle.com/datasets/maunish/clrp-roberta-base)
+
 ### Sentence Similarity
 
 Determining the similarity between sentences is necessary for this project, as we will be using it to construct a rewrite quality metric which will allow us to generate some "Human Feedback" to bootstrap the process before we can retrieve human annotation for further RLHF tuning. Sentence similarity is a well explored problem, so we will be using a pretrained model without augmentation for generating this value.
+
+[Pretrained Sentence Similarity Model - all-mpnet-base-v2](https://huggingface.co/sentence-transformers/all-mpnet-base-v2)
 
 ### Rewrite Quality
 
@@ -39,6 +43,10 @@ The RLHF process will require taking our dataset produced in the previous step a
 ![image](./assets/ppo_trainer.png)
 [RLHF process done using DeepSpeed - Building from Example Project](https://github.com/microsoft/DeepSpeedExamples/tree/master/applications/DeepSpeed-Chat)
 
+[Actor Model - opt-1.3b](https://huggingface.co/facebook/opt-1.3b)
+
+[Critic Model - opt-350m](https://huggingface.co/facebook/opt-350m)
+
 ### Rewrite using Few-shot learning LLMs
 
 Our last model will be a much larger model than our RLHF model, since we do not have the constraint of needing to be able to run two copies of the RLHF model and is reward model in order to fine tune it we can use a much larger LLM. We add more context to the input by providing both instruction and two examples of accepted rewrites into the model. We will then compare how this method stacks up to our much smaller RLHF model.
@@ -60,6 +68,8 @@ Example Prompt Prepend
         )
         return f'{prepend}"{prompt}." Rewrite: "'
 ```
+
+[Large Model - falcon-7b](https://huggingface.co/tiiuae/falcon-7b)
 
 ### POC Rewrite Workflow
 
