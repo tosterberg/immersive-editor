@@ -71,13 +71,13 @@ Example Prompt Prepend
 
 [Large Model - falcon-7b](https://huggingface.co/tiiuae/falcon-7b)
 
-### POC Rewrite Workflow
+## POC Rewrite Workflow
 
 Our rewrite workflow will run two large language models, one LLM with few-shot learning, and the other fine-tuned using RLHF. The outputs of these models will be given similarity scores, readability scores, and compared to the input sentence readability. The best quality score rewrites will be returned to the frontend for the user to analyze and annotate for future human feedback datasets. 
 
 ![image](./assets/rewrite_workflow.png)
 
-### Observations
+## Observations
 
 The following are word count distributions of the input sentence, and its rewrites using LLM or RLHF models.
 
@@ -95,7 +95,7 @@ RLHF rewrite sentences
 
 We can see that the number of words per sentence decreases when applying our rewrite models. The acceptance rate of our various models based on our "quality score" also increases depending on the preparation for the model. The general instruction LLM with no examples had an acceptance rate of 23.53%. The RLHF model had an acceptance rate of 30.79%, and the few-shot big LLM had an acceptance rate of 36.09%. It will be interesting to compare how these acceptance percentages change when moving to human annotation, as well as retraining our RLHF with real feedback in the future. Other notable observations are that the RLHF and LLM models used small vocabularies of total tokens than the input, some changes in frequency usage of parts of speech, and reductions in the number of ngrams produced. The calculations for these can be found in the jupyter notebook `eda.ipynb` in `research/readability-classification` and `research/rlhf-sample/RLHF`.
 
-### POC Implementation
+## POC Implementation
 
 Using Flask and Jinja2 for a rudimentary interface, I started a RESTful API for interacting with the model workflows. The two features currently being highlighted are the sentence level readability of an input text, and the generation of easier to read rewrites of sentences.
 
