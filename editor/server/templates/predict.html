@@ -11,16 +11,52 @@
         </div>
     </form>
     {% if res %}
-    {% for inference in res: %}
-    <div style="box-shadow: 2px 3px 4px rgba(0,0,0,.5); padding: 14px; width: 800px; margin: 14px auto">
-        <div>{{ inference.rewrite }}</div>
-        <ul>
-            <li><i>Model:</i> {{ inference.model_name }}</li>
-            <li><i>Readability Improvement:</i> {{ "%.2f" % inference.readability_change }}</li>
-            <li><i>Similarity to Input:</i> {{ "%.2f" % inference.similarity }}</li>
-            <li><i>Quality Score:</i> {{ "%.2f" % inference.quality_score }}</li>
-        </ul>
-    </div>
-    {% endfor %}
+    <form action="" method="post" novalidate>
+        {{ annotate.hidden_tag() }}
+        <div style="box-shadow: 2px 3px 4px rgba(0,0,0,.5); padding: 14px; width: 800px; margin: 14px auto">
+            <div>{{ res.inferences[0].rewrite }}</div>
+            <ul>
+                <li><i>Model:</i> {{ res.inferences[0].model_name }}</li>
+                <li><i>Readability Improvement:</i> {{ "%.2f" % res.inferences[0].readability_change }}</li>
+                <li><i>Similarity to Input:</i> {{ "%.2f" % res.inferences[0].similarity }}</li>
+                <li><i>Quality Score:</i> {{ "%.2f" % res.inferences[0].quality_score }}</li>
+            </ul>
+            <div>Accept response: {{ annotate.accept_1 }}</div>
+        </div>
+        <div style="box-shadow: 2px 3px 4px rgba(0,0,0,.5); padding: 14px; width: 800px; margin: 14px auto">
+            <div>{{ res.inferences[1].rewrite }}</div>
+            <ul>
+                <li><i>Model:</i> {{ res.inferences[1].model_name }}</li>
+                <li><i>Readability Improvement:</i> {{ "%.2f" % res.inferences[1].readability_change }}</li>
+                <li><i>Similarity to Input:</i> {{ "%.2f" % res.inferences[1].similarity }}</li>
+                <li><i>Quality Score:</i> {{ "%.2f" % res.inferences[1].quality_score }}</li>
+            </ul>
+            <div>Accept response: {{ annotate.accept_2 }}</div>
+        </div>
+        <div style="box-shadow: 2px 3px 4px rgba(0,0,0,.5); padding: 14px; width: 800px; margin: 14px auto">
+            <div>{{ res.inferences[2].rewrite }}</div>
+            <ul>
+                <li><i>Model:</i> {{ res.inferences[2].model_name }}</li>
+                <li><i>Readability Improvement:</i> {{ "%.2f" % res.inferences[2].readability_change }}</li>
+                <li><i>Similarity to Input:</i> {{ "%.2f" % res.inferences[2].similarity }}</li>
+                <li><i>Quality Score:</i> {{ "%.2f" % res.inferences[2].quality_score }}</li>
+            </ul>
+            <div>Accept response: {{ annotate.accept_3 }}</div>
+        </div>
+        <div style="box-shadow: 2px 3px 4px rgba(0,0,0,.5); padding: 14px; width: 800px; margin: 14px auto">
+            <div>{{ res.inferences[3].rewrite }}</div>
+            <ul>
+                <li><i>Model:</i> {{ res.inferences[3].model_name }}</li>
+                <li><i>Readability Improvement:</i> {{ "%.2f" % res.inferences[3].readability_change }}</li>
+                <li><i>Similarity to Input:</i> {{ "%.2f" % res.inferences[3].similarity }}</li>
+                <li><i>Quality Score:</i> {{ "%.2f" % res.inferences[3].quality_score }}</li>
+            </ul>
+            <div>Accept response: {{ annotate.accept_4 }}</div>
+        </div>
+        <div style="padding: 14px; margin: 14px auto; width: 800px">
+            {{ annotate.submit() }}
+        </div>
+    </form>
+
     {% endif %}
 {% endblock %}

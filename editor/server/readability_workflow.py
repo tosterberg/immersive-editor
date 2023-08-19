@@ -164,7 +164,7 @@ class ReadabilityWorkflow(object):
             self.responses.append(response)
         return dict({"inferences": responses[:count]})
 
-    def generate_rewrite(self, predictor, config, responses, retries=10):
+    def generate_rewrite(self, predictor, config, responses, retries=1):
         responses_adjusted_retries = responses * retries
         response_list = []
         for attempt in range(responses_adjusted_retries):
@@ -185,11 +185,14 @@ class ReadabilityWorkflow(object):
             config["readability_change"] = delta_readability
             config["quality_score"] = (delta_readability + 1) * delta_similarity - 1
             config["rewrite_id"] = str(uuid.uuid4())
-            if delta_readability > 0.0 and config["similarity"] > 0.8:
-                response_list.append(copy.deepcopy(config))
-            if len(response_list) >= responses:
-                break
+            response_list.append(copy.deepcopy(config))
         return response_list
+
+    def get_similarity(self, input_prompt, output_response) -> float:
+        return self.similarity_model.predict(input_prompt, output_response)
+
+    def get_readability(self, prompts):
+        return [self.readability_model.predict(prompt) for prompt in prompts]
 
     def predict(self, prompt, responses=4):
         prompt_id = self.get_prompt_id(prompt)
@@ -201,7 +204,9 @@ class ReadabilityWorkflow(object):
         }
         gc.collect()
         rlhf = copy.deepcopy(config)
-        rlhf = self.generate_rewrite(self.rlhf_model, rlhf, responses)
+        rlhf = self.generate_rewrite(
+            self.rlhf_model, rlhf, responses, retries=responses
+        )
         gc.collect()
         if self.large_model:
             llm = copy.deepcopy(config)
@@ -411,7 +416,7 @@ class ReadabilityModelWrapper(object):
         delta_readability = output_readability - input_readability
         return input_readability, output_readability, delta_readability
 
-    def predict(self, prompt):
+    def predict(self, prompt) -> float:
         with torch.no_grad():
             encoded_input = self.tokenizer(
                 prompt, padding=True, truncation=True, return_tensors="pt"

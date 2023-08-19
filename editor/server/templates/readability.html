@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1 style="margin: auto; padding: 14px; width: 800px;">AutoClassification: Readability</h1>
+    <form action="" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div style="margin: auto; padding: 14px; width: 800px;">
+            <span>Original Text:</span><br>
+            {{ form.sentence(style="width: 800px; height 120px; margin-bottom: 14px") }}<br>
+            {{ form.submit() }}
+        </div>
+    </form>
+    {% if res %}
+    <div style="box-shadow: 2px 3px 4px rgba(0,0,0,.5); padding: 14px; width: 800px; margin: 14px auto">
+    {% for sentence in res: %}
+            {% if sentence.readability <= -1.5 %}
+            <span style="background: #FFC107; padding: 1px">{{ sentence.sentence }}</span>
+            {% else %}
+            <span style="padding: 1px;">{{ sentence.sentence }}</span>
+            {% endif %}
+    {% endfor %}
+    </div>
+    {% endif %}
+{% endblock %}

@@ -159,11 +159,8 @@ if __name__ == "__main__":
     torch.device(DEVICE)
     set_random_seed(SEED)
 
-    # sentences = make_new_dataset(train_df)
-    # with open("sentence_dataset.json", 'w') as f:
-    #     json.dump(sentences, f)
     response_list = []
-    with open("data/sentence_second_inferences.json", "r") as f:
+    with open("data/sentence_rlhf_inferences.json", "r") as f:
         sentence_dataset = json.load(f)
 
     similarity_model = AutoModel.from_pretrained(SEMANTIC_EMBEDDING)
@@ -248,8 +245,5 @@ if __name__ == "__main__":
     print(
         f"Done... Acceptance {acceptance_count/len(data) * 100:.2f}%, Total {acceptance_count}"
     )
-    # with open("data/sentence_sft_dataset.json", "w") as f:
-    with open("data/sentence_sft_second_dataset.json", "w") as f:
+    with open("data/sentence_sft_rlhf_dataset.json", "w") as f:
         json.dump(response_dataset, f)
-"""
-"""
