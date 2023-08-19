@@ -64,7 +64,7 @@ def rewrite():
             for i in range(4):
                 if str(i + 1) in request.form.keys():
                     work_state["inferences"][i]["chosen"] = True
-                res = requests.post(f"{URL_BASE}/annotate")
+                res = requests.post(f"{URL_BASE}/annotate")  # Fixup workflow later
     return render_template(
         "predict.html",
         title="Rewrite",
@@ -118,4 +118,4 @@ def clear_state():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)
